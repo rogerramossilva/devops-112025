@@ -1,0 +1,59 @@
+- name: Instalar Docker no Debian
+  hosts: all
+  become: yes
+  tasks:
+  
+    - name: Atualizar cache do APT
+      apt:
+        update_cache: yes
+
+    - name: Instalar dependências
+      apt:
+        name:
+          - ca-certificates
+          - curl
+        state: present
+
+    - name: Criar diretório para keyrings do APT
+      file:
+        path: /etc/apt/keyrings
+        state: directory
+        mode: '0755'
+
+    - name: Baixar chave GPG oficial do Docker
+      get_url:
+        url: https://download.docker.com/linux/debian/gpg
+        dest: /etc/apt/keyrings/docker.asc
+        mode: '0644'
+
+    - name: Adicionar repositório do Docker ao APT sources
+      ansible.builtin.shell: |
+        echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/debian $(. /etc/os-release && echo "$VERSION_CODENAME") stable" | tee /etc/apt/sources.list.d/docker.list
+      args:
+        executable: /bin/bash
+
+    - name: Atualizar cache do APT após adicionar repositório do Docker
+      apt:
+        update_cache: yes
+
+    - name: Instalar pacotes do Docker
+      apt:
+        name:
+          - docker-ce
+          - docker-ce-cli
+          - containerd.io
+          - docker-buildx-plugin
+          - docker-compose-plugin
+        state: present
+
+    - name: Adicionar usuário ao grupo docker
+      user:
+        name: vagrant
+        groups: docker
+        append: yes
+
+    - name: Reiniciar e habilitar serviço do Docker
+      service:
+        name: docker
+        state: restarted
+        enabled: yes

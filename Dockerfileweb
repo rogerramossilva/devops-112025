@@ -1,0 +1,17 @@
+FROM debian:11-slim
+
+LABEL maintainer="Rogerio Martinho rogerio@asf.com"
+ENV PORT=80
+
+RUN apt update && apt install apache2 php php7.4-mysql vim -y  && a2enmod php7.4 
+
+# Remova o arquivo index.html padrão
+RUN rm -f /var/www/html/index.html
+
+COPY ./web/ /var/www/html
+
+EXPOSE $PORT
+
+WORKDIR /etc/apache2
+
+CMD ["apachectl", "-D", "FOREGROUND"]

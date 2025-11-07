@@ -1,0 +1,9 @@
+---
+- name: facts
+  hosts: web
+  become: yes
+  gather_facts: true
+  tasks:
+    - name: teste
+      debug:
+        var: ansible_facts

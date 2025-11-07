@@ -1,0 +1,65 @@
+---
+- hosts: db
+  become: yes
+  tasks:
+    - name: 'Instalação de Pacotes BD'
+      apt:
+        pkg:
+          - mariadb-server
+          - wget
+          - zip
+          - curl
+          - vim
+          - python3-mysqldb
+        state: present
+        update_cache: yes
+      tags:
+        - install
+
+
+    - name: 'Criando DB backup'
+      mysql_db:
+        name: backup
+        state: present
+        login_unix_socket: /run/mysqld/mysqld.sock
+
+    - name: 'Verificar se o banco já foi extraído'
+      stat:
+         path: /tmp/backup.sql
+      register: db_existente
+
+    - name: 'Download e extração DB'
+      unarchive:
+        src: http://forceclass-00.linuxforce.com.br/express/backup.zip
+        dest: /tmp
+        remote_src: yes
+      when: not db_existente.stat.exists
+    
+    - name: 'Importação Base de Dados backup.sql'
+      mysql_db:
+        state: import
+        name: backup
+        target: /tmp/backup.sql
+        login_unix_socket: /run/mysqld/mysqld.sock
+    - name: 'Criação de Usuário Express no Mysql'
+      mysql_user:
+        host: '%'
+        name: express
+        password: 'AllSafe0!'
+        priv: 'backup.*:ALL'
+        state: present
+        login_unix_socket: /run/mysqld/mysqld.sock
+
+    - name: 'Substituir bind do mysql'
+      replace:
+        path: /etc/mysql/mariadb.conf.d/50-server.cnf
+        regexp: '127\.0\.0\.1'
+        replace: '0.0.0.0'
+      notify: RestartMysql  
+
+  handlers:
+    - name: RestartMysql
+      service:
+        name: mysql
+        state: restarted
+        enabled: yes
