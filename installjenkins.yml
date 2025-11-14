@@ -1,0 +1,41 @@
+---
+- name: Instalação do Jenkins
+  hosts: all
+  become: true
+
+  tasks:
+    - name: Instalar dependências
+      apt:
+        name:
+          - apt-transport-https
+          - ca-certificates
+          - curl
+          - gnupg2
+          - fontconfig
+          - openjdk-17-jdk
+          - software-properties-common
+        state: present
+
+    - name: Adicionar chave GPG do Jenkins
+      apt_key:
+        url: https://pkg.jenkins.io/debian-stable/jenkins.io-2023.key
+        state: present
+
+    - name: Adicionar repositório do Jenkins
+      apt_repository:
+        repo: deb https://pkg.jenkins.io/debian-stable binary/
+        state: present
+    - name: Atualizar cache de pacotes
+      apt:
+        update_cache: yes
+
+    - name: Instalar Jenkins
+      apt:
+        name: jenkins
+        state: present
+
+    - name: Iniciar e habilitar serviço do Jenkins
+      systemd:
+        name: jenkins
+        state: started
+        enabled: yes
