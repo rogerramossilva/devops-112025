@@ -60,7 +60,7 @@ pipeline {
                 slackSend channel: '#devops', message: "Subindo containers para testes...", tokenCredentialId: 'slack-token'
 
                 sh """
-                    docker rm -f web db nginx || true
+                    docker rm -f web1 web2 web3 db nginx || true
                     docker compose -f ${COMPOSE_FILE} up -d
 
                     sleep 5
